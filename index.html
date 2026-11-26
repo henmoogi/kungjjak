@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>쿵짝 - 박자 연습기</title>
+<meta name="description" content="박자를 고르고 짝 소리에 맞춰 패드를 누르면, 얼마나 빠르고 늦었는지 바로 알려 주는 무료 박자 연습기. 2/4, 3/4, 4/4, 6/8, 12/8.">
+<meta property="og:title" content="쿵짝 - 박자 연습기">
+<meta property="og:description" content="짝 소리에 맞춰 누르면 몇 ms 빠르고 늦었는지 바로 알려 줘요. 설치·가입 없는 무료 박자 연습기.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://henmoogi.github.io/kungjjak/">
+<meta property="og:image" content="https://henmoogi.github.io/kungjjak/og-image.png">
+<meta property="og:locale" content="ko_KR">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500&display=swap">
+<style>
+/* layout: single-column instrument panel - meter picker, info, step sequencer, transport, tap pad, options */
+:root{
+  --bg:#F1F2F5; --panel:#FFFFFF; --line:#D8DBE2; --ink:#16181D; --muted:#5B6170; --faint:#7D8494;
+  --kick:#2D4FC4; --kick-bg:#E3E9FB; --kick-ink:#1D347F; --on-kick:#FFFFFF;
+  --snare:#E0621B; --snare-bg:#FDEADF; --snare-ink:#933A0A; --on-snare:#FFFFFF;
+  --hat-bg:#E9EBF0; --hat-on:#C3C8D3;
+  --ok:#1C8350; --warn:#A86200; --bad:#BE3A2C;
+  --font-display:"Do Hyeon","IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111318; --panel:#1A1D24; --line:#2C313B; --ink:#ECEEF3; --muted:#A0A7B5; --faint:#808899;
+    --kick:#6C8CF0; --kick-bg:#1F2A4D; --kick-ink:#C4D1FB; --on-kick:#0E1633;
+    --snare:#FF8B45; --snare-bg:#45240F; --snare-ink:#FFD2B8; --on-snare:#2A1205;
+    --hat-bg:#232731; --hat-on:#3E4555;
+    --ok:#4CC88A; --warn:#E6A43A; --bad:#F07368;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111318; --panel:#1A1D24; --line:#2C313B; --ink:#ECEEF3; --muted:#A0A7B5; --faint:#808899;
+  --kick:#6C8CF0; --kick-bg:#1F2A4D; --kick-ink:#C4D1FB; --on-kick:#0E1633;
+  --snare:#FF8B45; --snare-bg:#45240F; --snare-ink:#FFD2B8; --on-snare:#2A1205;
+  --hat-bg:#232731; --hat-on:#3E4555;
+  --ok:#4CC88A; --warn:#E6A43A; --bad:#F07368;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.6}
+a{color:var(--kick)}
+.wrap{max-width:580px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:flex;flex-direction:column;gap:22px}
+.eyebrow{margin:0 0 4px;font-size:14px;color:var(--muted);letter-spacing:.04em}
+h1{font-family:var(--font-display);font-weight:400;font-size:clamp(40px,10vw,52px);line-height:1.05;margin:0;text-wrap:balance}
+.lede{margin:10px 0 0;color:var(--muted);font-size:15px;max-width:60ch}
+.meters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.chip{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:12px;padding:10px 2px 9px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font:inherit}
+.chip:hover{border-color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--panel)}
+.sig{display:flex;flex-direction:column;align-items:center;font-family:var(--font-display);font-size:26px;line-height:0.86}
+.lab{font-size:12px;line-height:1.2;white-space:nowrap;color:var(--muted)}
+.chip[aria-pressed="true"] .lab{color:var(--panel)}
+.info{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.info h2{font-family:var(--font-display);font-weight:400;font-size:26px;margin:0;line-height:1.1}
+.feel{margin:0;font-size:15px}
+.facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;margin:0;font-size:14px}
+.facts dt{color:var(--faint)}
+.facts dd{margin:0;min-width:0}
+.seq{display:grid;gap:10px;grid-template-columns:repeat(var(--groups),minmax(0,1fr))}
+.grp{display:grid;grid-template-columns:repeat(var(--sub),minmax(0,1fr));gap:4px}
+.cell{border-radius:10px;height:78px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:background-color 50ms linear}
+.compound .cell{height:64px}
+.num{font-family:var(--font-mono);font-size:11px;line-height:1}
+.syl{font-family:var(--font-display);font-size:26px;line-height:1}
+.compound .syl{font-size:20px}
+.cell.k{background:var(--kick-bg);color:var(--kick-ink)}
+.cell.s{background:var(--snare-bg);color:var(--snare-ink)}
+.cell.h{background:var(--hat-bg);color:var(--muted)}
+.cell.h .syl{font-size:16px}
+.cell.on.k{background:var(--kick);color:var(--on-kick)}
+.cell.on.s{background:var(--snare);color:var(--on-snare)}
+.cell.on.h{background:var(--hat-on);color:var(--ink)}
+@media (max-width:480px){.seq.c12{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);margin-top:-10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.sw.k{background:var(--kick)} .sw.s{background:var(--snare)} .sw.h{background:var(--hat-on)}
+.transport{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.play{appearance:none;border:0;background:var(--ink);color:var(--panel);font:500 17px/1 var(--font-body);height:50px;min-width:112px;border-radius:12px;cursor:pointer;padding:0 18px}
+.tempo{flex:1;min-width:210px;display:flex;align-items:center;gap:10px}
+.tempo label{font-size:14px;color:var(--muted);white-space:nowrap}
+.tempo input{flex:1;min-width:0;accent-color:var(--kick)}
+.bpm{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:18px;font-weight:500;min-width:3ch;text-align:right}
+.unit{font-size:12px;color:var(--faint);white-space:nowrap}
+.pad{appearance:none;width:100%;height:160px;border-radius:18px;border:1.5px solid var(--snare);background:var(--snare-bg);color:var(--snare-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;font:inherit}
+.pad .big{font-family:var(--font-display);font-size:46px;line-height:1}
+.pad .hint{font-size:13px}
+.pad.hit{background:var(--snare);color:var(--on-snare)}
+.result{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:-6px}
+.fb{font-size:17px;font-weight:500;min-height:1.6em;text-align:center;margin:0;color:var(--muted)}
+.fb.ok{color:var(--ok)} .fb.warn{color:var(--warn)} .fb.bad{color:var(--bad)}
+.stats{display:flex;gap:22px;font-size:13px;color:var(--muted);margin:0}
+.stats b{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:500;color:var(--ink);font-size:16px;margin-left:4px}
+.opts{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding-top:14px}
+.opt{display:flex;align-items:flex-start;gap:10px;font-size:15px;padding:6px 0;cursor:pointer}
+.opt input{width:18px;height:18px;margin-top:4px;accent-color:var(--snare);flex:none}
+.opt span{display:flex;flex-direction:column;line-height:1.4}
+.opt small{color:var(--faint);font-size:13px}
+.notes{font-size:13px;color:var(--faint);margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px}
+.foot{font-size:12px;color:var(--faint);margin:0;border-top:1px solid var(--line);padding-top:14px;line-height:1.7}
+button:focus-visible,input:focus-visible{outline:2px solid var(--kick);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.cell{transition:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <p class="eyebrow">박자 연습기</p>
+    <h1>쿵짝</h1>
+    <p class="lede">박자를 고르고 시작을 누른 뒤, 주황색 짝 소리에 맞춰 패드를 눌러 보세요. 처음엔 느리게, 몸으로 먼저 타는 게 요령이에요.</p>
+  </header>
+
+  <nav class="meters" aria-label="박자 고르기">
+    <button class="chip" data-m="2/4" aria-pressed="false" aria-label="4분의 2박자, 행진곡"><span class="sig" aria-hidden="true"><span>2</span><span>4</span></span><span class="lab">행진곡</span></button>
+    <button class="chip" data-m="3/4" aria-pressed="false" aria-label="4분의 3박자, 왈츠"><span class="sig" aria-hidden="true"><span>3</span><span>4</span></span><span class="lab">왈츠</span></button>
+    <button class="chip" data-m="4/4" aria-pressed="true" aria-label="4분의 4박자, 가요와 팝"><span class="sig" aria-hidden="true"><span>4</span><span>4</span></span><span class="lab">가요·팝</span></button>
+    <button class="chip" data-m="6/8" aria-pressed="false" aria-label="8분의 6박자, 자장가"><span class="sig" aria-hidden="true"><span>6</span><span>8</span></span><span class="lab">자장가</span></button>
+    <button class="chip" data-m="12/8" aria-pressed="false" aria-label="8분의 12박자, 블루스"><span class="sig" aria-hidden="true"><span>12</span><span>8</span></span><span class="lab">블루스</span></button>
+  </nav>
+
+  <section class="info" aria-live="polite">
+    <h2 id="mName">4/4 박자</h2>
+    <p class="feel" id="mFeel">쿵 짝 쿵 짝, 네 박이 한 마디예요. 대중음악에서 가장 흔한 박자라 먼저 익혀 두면 좋아요.</p>
+    <dl class="facts">
+      <dt>세는 법</dt><dd id="mCount">하나 둘 셋 넷</dd>
+      <dt>이런 곡</dt><dd id="mSongs">가요와 팝의 많은 곡</dd>
+    </dl>
+  </section>
+
+  <div class="seq" id="seq" style="--groups:4" aria-label="한 마디의 박">
+    <div class="grp" style="--sub:1"><div class="cell k" id="c0"><span class="num">1</span><span class="syl">쿵</span></div></div>
+    <div class="grp" style="--sub:1"><div class="cell s" id="c1"><span class="num">2</span><span class="syl">짝</span></div></div>
+    <div class="grp" style="--sub:1"><div class="cell k" id="c2"><span class="num">3</span><span class="syl">쿵</span></div></div>
+    <div class="grp" style="--sub:1"><div class="cell s" id="c3"><span class="num">4</span><span class="syl">짝</span></div></div>
+  </div>
+  <div class="legend" aria-hidden="true">
+    <span><i class="sw k"></i>쿵: 발 구르기</span>
+    <span><i class="sw s"></i>짝: 패드 누르기</span>
+    <span><i class="sw h"></i>츠: 속으로 세기</span>
+  </div>
+
+  <div class="transport">
+    <button class="play" id="play" aria-pressed="false">시작</button>
+    <div class="tempo">
+      <label for="tempo">빠르기</label>
+      <input type="range" id="tempo" min="40" max="140" step="1" value="80">
+      <span class="bpm" id="bpm">80</span>
+      <span class="unit" id="unit">BPM</span>
+    </div>
+  </div>
+
+  <button class="pad" id="pad" aria-label="짝 박자에 맞춰 누르기"><span class="big">짝</span><span class="hint">짝 소리에 맞춰 누르기 · 키보드는 스페이스</span></button>
+
+  <div class="result">
+    <p class="fb" id="fb" aria-live="polite">시작을 누르고 짝에 맞춰 패드를 눌러 보세요</p>
+    <p class="stats">정확<b id="sHit">0</b> 시도<b id="sTry">0</b> 연속<b id="sStreak">0</b></p>
+  </div>
+
+  <section class="opts" aria-label="소리 설정">
+    <label class="opt"><input type="checkbox" id="bell" checked><span>마디 첫 박 종소리<small>한 마디가 어디서 다시 시작하는지 알려줘요</small></span></label>
+    <label class="opt"><input type="checkbox" id="hh"><span>하이햇(츠) 소리<small>박을 잘게 쪼개 들려줘요. 6/8, 12/8에서는 기본으로 켜져요</small></span></label>
+    <label class="opt"><input type="checkbox" id="mute"><span>짝 소리 빼고 내가 채우기<small>익숙해지면 켜 보세요. 누를 때 박수 소리가 나요</small></span></label>
+  </section>
+
+  <ul class="notes">
+    <li>블루투스 이어폰은 소리가 늦게 도착해서 '늦어요'가 많이 나올 수 있어요. 휴대폰 스피커로 연습하는 걸 추천해요.</li>
+    <li>휴대폰이 무음 모드면 소리가 나지 않을 수 있어요.</li>
+    <li>6/8과 12/8은 느낌이 비슷해서 같은 곡도 악보마다 다르게 적기도 해요.</li>
+  </ul>
+
+  <p class="foot">개인이 만든 무료 도구예요. 소리는 이 기기에서 바로 만들고, 고른 박자와 빠르기만 이 기기에 저장해요. 서버로 보내는 것은 없어요. 소스: <a href="https://github.com/henmoogi/kungjjak">github.com/henmoogi/kungjjak</a></p>
+</main>
+
+<script>
+(function(){
+var METERS={
+  '2/4':{name:'2/4 박자',groups:2,sub:1,steps:['k','s'],compound:false,tempo:100,
+    feel:'쿵 짝, 두 박이 한 마디예요. 왼발 오른발 걷는 걸음과 같은 박자예요.',
+    count:'하나 둘 | 하나 둘',songs:'행진곡, 폴카'},
+  '3/4':{name:'3/4 박자',groups:3,sub:1,steps:['k','s','s'],compound:false,tempo:96,
+    feel:'쿵 짝 짝, 세 박이 한 마디예요. 첫 박에 힘을 주고 둘·셋은 가볍게 넘겨요.',
+    count:'하나 둘 셋 | 하나 둘 셋',songs:'왈츠, 생일 축하합니다'},
+  '4/4':{name:'4/4 박자',groups:4,sub:1,steps:['k','s','k','s'],compound:false,tempo:80,
+    feel:'쿵 짝 쿵 짝, 네 박이 한 마디예요. 대중음악에서 가장 흔한 박자라 먼저 익혀 두면 좋아요.',
+    count:'하나 둘 셋 넷',songs:'가요와 팝의 많은 곡'},
+  '6/8':{name:'6/8 박자',groups:2,sub:3,steps:['k','h','h','s','h','h'],compound:true,tempo:56,
+    feel:'큰 박 둘을 각각 셋으로 쪼개요. 요람이 흔들리듯 출렁이는 느낌이에요.',
+    count:'하나 둘 셋 넷 다섯 여섯 (크게는 하나, 둘)',songs:'섬집아기, 퀸 We Are the Champions'},
+  '12/8':{name:'12/8 박자',groups:4,sub:3,steps:['k','h','h','s','h','h','k','h','h','s','h','h'],compound:true,tempo:60,
+    feel:'큰 박 넷을 각각 셋으로 쪼개요. 4/4를 셋씩 출렁이며 느리게 타는 느낌이에요.',
+    count:'하나둘셋 둘둘셋 셋둘셋 넷둘셋',songs:'느린 블루스, 1950년대 두왑 발라드'}
+};
+var SYL={k:'쿵',s:'짝',h:'츠'};
+function $(s){return document.querySelector(s);}
+
+var store={meter:'4/4',tempos:{},hat:{simple:false,compound:true}};
+try{var raw=localStorage.getItem('kungjjak-v1');if(raw){var p=JSON.parse(raw);if(p&&METERS[p.meter])store.meter=p.meter;if(p&&p.tempos)store.tempos=p.tempos;if(p&&p.hat)store.hat=p.hat;}}catch(e){}
+function save(){try{localStorage.setItem('kungjjak-v1',JSON.stringify(store));}catch(e){}}
+
+var cur=store.meter,ctx=null,noiseBuf=null,playing=false,timer=null,nextTime=0,stepNo=0,wl=null;
+var q=[],sc=[],hits=0,tries=0,streak=0;
+
+function tempoFor(m){var t=+store.tempos[m];return (t>=40&&t<=140)?t:METERS[m].tempo;}
+function render(){
+  var m=METERS[cur];
+  document.querySelectorAll('.chip').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-m')===cur?'true':'false');});
+  $('#mName').textContent=m.name;$('#mFeel').textContent=m.feel;$('#mCount').textContent=m.count;$('#mSongs').textContent=m.songs;
+  var seq=$('#seq');seq.style.setProperty('--groups',m.groups);
+  seq.className='seq'+(m.compound?' compound':'')+(m.steps.length===12?' c12':'');
+  var html='';
+  for(var g=0;g<m.groups;g++){
+    html+='<div class="grp" style="--sub:'+m.sub+'">';
+    for(var j=0;j<m.sub;j++){var i=g*m.sub+j,t=m.steps[i];html+='<div class="cell '+t+'" id="c'+i+'"><span class="num">'+(i+1)+'</span><span class="syl">'+SYL[t]+'</span></div>';}
+    html+='</div>';
+  }
+  seq.innerHTML=html;
+  var tp=tempoFor(cur);$('#tempo').value=tp;$('#bpm').textContent=tp;
+  $('#unit').textContent=m.compound?'BPM · 큰 박':'BPM';
+  $('#hh').checked=m.compound?store.hat.compound:store.hat.simple;
+}
+function updStats(){$('#sHit').textContent=hits;$('#sTry').textContent=tries;$('#sStreak').textContent=streak;}
+function setFb(t,c){var f=$('#fb');f.textContent=t;f.className='fb'+(c?' '+c:'');}
+
+function initAudio(){
+  if(ctx)return;
+  ctx=new(window.AudioContext||window.webkitAudioContext)();
+  var len=Math.floor(ctx.sampleRate*0.5);noiseBuf=ctx.createBuffer(1,len,ctx.sampleRate);
+  var d=noiseBuf.getChannelData(0);for(var i=0;i<len;i++)d[i]=Math.random()*2-1;
+}
+function kick(t){var o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(45,t+0.15);g.gain.setValueAtTime(1,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.35);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+0.4);}
+function noise(t,dur,freq,vol,type){var s=ctx.createBufferSource();s.buffer=noiseBuf;var f=ctx.createBiquadFilter();f.type=type||'highpass';f.frequency.value=freq;var g=ctx.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);s.connect(f);f.connect(g);g.connect(ctx.destination);s.start(t);s.stop(t+dur+0.02);}
+function snare(t){noise(t,0.18,1200,0.7);var o=ctx.createOscillator(),g=ctx.createGain();o.type='triangle';o.frequency.setValueAtTime(190,t);g.gain.setValueAtTime(0.5,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.1);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+0.12);}
+function clap(t){noise(t,0.12,1500,0.8,'bandpass');}
+function hat(t,v){noise(t,0.04,7000,v);}
+function bell(t){var o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(1568,t);g.gain.setValueAtTime(0.22,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.18);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+0.2);}
+function lat(){return (ctx.outputLatency||0)+(ctx.baseLatency||0);}
+function stepDur(){var m=METERS[cur],b=+$('#tempo').value;return m.compound?60/b/3:60/b;}
+
+function sched(){
+  var m=METERS[cur],n=m.steps.length;
+  while(nextTime<ctx.currentTime+0.12){
+    var d=stepDur(),i=stepNo%n,t=m.steps[i];
+    if(t==='k')kick(nextTime);
+    else if(t==='s'){if(!$('#mute').checked)snare(nextTime);}
+    if($('#hh').checked){hat(nextTime,t==='h'?0.2:0.13);if(!m.compound)hat(nextTime+d/2,0.12);}
+    if(i===0&&$('#bell').checked)bell(nextTime);
+    q.push({t:nextTime,i:i});sc.push({t:nextTime,type:t});if(sc.length>32)sc.shift();
+    nextTime+=d;stepNo++;
+  }
+}
+function draw(){
+  if(!playing)return;
+  var now=ctx.currentTime-lat(),last=-1;
+  while(q.length&&q[0].t<=now){last=q.shift().i;}
+  if(last>=0){document.querySelectorAll('.cell.on').forEach(function(c){c.classList.remove('on');});var c=document.getElementById('c'+last);if(c)c.classList.add('on');}
+  requestAnimationFrame(draw);
+}
+function start(){
+  initAudio();
+  if(ctx.resume)ctx.resume();
+  playing=true;stepNo=0;q.length=0;sc.length=0;nextTime=ctx.currentTime+0.15;
+  sched();timer=setInterval(sched,25);requestAnimationFrame(draw);
+  $('#play').textContent='멈춤';$('#play').setAttribute('aria-pressed','true');
+  setFb('쿵에는 발을 구르고, 짝에 패드를 누르세요','');
+  try{if(navigator.wakeLock&&navigator.wakeLock.request){navigator.wakeLock.request('screen').then(function(l){wl=l;}).catch(function(){wl=null;});}}catch(e){}
+}
+function stop(){
+  playing=false;clearInterval(timer);timer=null;
+  document.querySelectorAll('.cell.on').forEach(function(c){c.classList.remove('on');});
+  $('#play').textContent='시작';$('#play').setAttribute('aria-pressed','false');
+  if(wl){try{wl.release();}catch(e){}wl=null;}
+}
+function flash(){var p=$('#pad');p.classList.add('hit');setTimeout(function(){p.classList.remove('hit');},110);}
+function tap(){
+  if(!playing){setFb('먼저 시작을 눌러 주세요','');return;}
+  if($('#mute').checked)clap(ctx.currentTime);
+  var t=ctx.currentTime-lat();if(!sc.length)return;
+  var near=null,nd=1e9,snr=null,sd=1e9;
+  sc.forEach(function(s){var d=Math.abs(t-s.t);if(d<nd){nd=d;near=s;}if(s.type==='s'&&d<sd){sd=d;snr=s;}});
+  if(near.type!=='k'&&!snr){setFb('짝 소리를 기다렸다가 눌러 보세요','');return;}
+  tries++;
+  if(near.type==='k'){streak=0;setFb('여긴 쿵 자리예요. 다음 짝을 기다려요','bad');}
+  else{
+    var ms=Math.round((t-snr.t)*1000);
+    if(near.type==='h'&&Math.abs(ms)>stepDur()*1500){streak=0;setFb('여긴 츠 자리예요. 짝까지 세어 보세요','bad');}
+    else if(Math.abs(ms)<=80){hits++;streak++;flash();setFb('정확해요','ok');}
+    else if(ms<0){streak=0;setFb('조금 빨라요 '+Math.abs(ms)+'ms','warn');}
+    else{streak=0;setFb('조금 늦어요 '+ms+'ms','warn');}
+  }
+  updStats();
+}
+
+$('#play').addEventListener('click',function(){if(playing)stop();else start();});
+$('#pad').addEventListener('pointerdown',function(e){if(e.cancelable)e.preventDefault();tap();});
+document.addEventListener('keydown',function(e){
+  if(e.code==='Space'||e.key===' '){
+    if(e.target&&e.target.id==='tempo')return;
+    if(playing){e.preventDefault();if(!e.repeat)tap();}
+  }
+});
+document.addEventListener('keyup',function(e){if((e.code==='Space'||e.key===' ')&&playing)e.preventDefault();});
+document.querySelectorAll('.chip').forEach(function(b){
+  b.addEventListener('click',function(){
+    var m=b.getAttribute('data-m');if(m===cur)return;
+    var was=playing;if(playing)stop();
+    cur=m;store.meter=m;save();hits=0;tries=0;streak=0;updStats();render();
+    if(was)start();else setFb('시작을 누르고 짝에 맞춰 패드를 눌러 보세요','');
+  });
+});
+$('#tempo').addEventListener('input',function(){var v=+this.value;$('#bpm').textContent=v;store.tempos[cur]=v;save();});
+$('#hh').addEventListener('change',function(){store.hat[METERS[cur].compound?'compound':'simple']=this.checked;save();});
+document.addEventListener('visibilitychange',function(){if(document.hidden&&playing)stop();});
+
+render();updStats();
+})();
+</script>
+</body>
+</html>
