@@ -1,7 +1,9 @@
-# 쿵짝 Kungjjak - 박자 연습기
+# 쿵짝이 Kungjjak - 박자 연습기
 
 박자를 고르고 시작을 누른 뒤 **짝 소리에 맞춰 패드를 누르면**, 맞았는지 **몇 ms 빠르고 늦었는지** 바로 알려 주는 웹 도구입니다.
 설치도 가입도 없이 주소만 열면 됩니다. 휴대폰에서 쓰기 좋게 만들었습니다.
+
+> 📝 소개 글: [네이버 블로그](https://blog.naver.com/henmoogi/224494132670) · 문의·후기는 블로그 댓글로
 
 ## 👉 바로 쓰기
 
@@ -37,7 +39,7 @@
 
 ## English
 
-**Kungjjak** is a beat practice tool: pick a time signature (2/4, 3/4, 4/4, 6/8, 12/8), press start, and tap the pad on the snare ("jjak"). It tells you right away whether you were on time or how many milliseconds early or late.
+**Kungjjak** (쿵짝이) is a beat practice tool: pick a time signature (2/4, 3/4, 4/4, 6/8, 12/8), press start, and tap the pad on the snare ("jjak"). It tells you right away whether you were on time or how many milliseconds early or late.
 No install, no sign-up: **https://henmoogi.github.io/kungjjak/** (Korean interface). Sound is generated in the browser; nothing is sent to a server.
 
 ## 라이선스 License
